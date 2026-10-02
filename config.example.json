@@ -1,0 +1,28 @@
+{
+  "calendar_name": "成大課程行事曆",
+  "output": "calendar.ics",
+  "keep_past_days": 30,
+  "alarm_minutes_before": [1440, 180],
+
+  "sources": [
+    {
+      "name": "NCKU Moodle（匯出行事曆網址）",
+      "type": "moodle_ical",
+      "url": "${MOODLE_ICAL_URL}"
+    },
+    {
+      "name": "NCKU Moodle（API，選用）",
+      "type": "moodle_api",
+      "base_url": "https://moodle.ncku.edu.tw",
+      "token": "${MOODLE_TOKEN}",
+      "enabled": false
+    },
+    {
+      "name": "其他行事曆（選用，例如 Google 日曆私人 iCal 網址、社團、學校行事曆）",
+      "type": "ics",
+      "url": "${EXTRA_ICS_URL}",
+      "prefix": "其他",
+      "enabled": false
+    }
+  ]
+}

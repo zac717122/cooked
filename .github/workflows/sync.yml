@@ -1,0 +1,41 @@
+name: Sync calendar
+
+on:
+  schedule:
+    - cron: "17 */2 * * *"   # 每 2 小時
+  workflow_dispatch:          # 也可以在 Actions 頁面手動按 Run
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build calendar.ics
+        env:
+          MOODLE_ICAL_URL: ${{ secrets.MOODLE_ICAL_URL }}
+          MOODLE_TOKEN: ${{ secrets.MOODLE_TOKEN }}
+          EXTRA_ICS_URL: ${{ secrets.EXTRA_ICS_URL }}
+        run: |
+          if [ -f config.json ]; then cfg=config.json; else cfg=config.example.json; fi
+          python3 calsync.py -c "$cfg" -o calendar.ics
+
+      # 上傳到你的「秘密 Gist」，日曆 App 訂閱它的 raw 網址
+      - name: Publish to secret gist
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          GIST_ID: ${{ secrets.GIST_ID }}
+        run: |
+          if [ -z "$GIST_TOKEN" ] || [ -z "$GIST_ID" ]; then
+            echo "::warning::沒設定 GIST_TOKEN / GIST_ID，跳過上傳"; exit 0
+          fi
+          python3 -c 'import json; print(json.dumps({"files": {"calendar.ics": {"content": open("calendar.ics", encoding="utf-8").read()}}}))' > body.json
+          curl -sSf -X PATCH \
+            -H "Authorization: Bearer $GIST_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/gists/$GIST_ID" \
+            --data @body.json > /dev/null
+          echo "✅ 已更新 gist"
